@@ -1,0 +1,114 @@
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = System
+ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider    = %ProviderName%
+DriverVer   = 11/15/2026,1.1.0.0
+CatalogFile = ES8316.cat
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+ES8316.sys = 1,,
+
+[Manufacturer]
+%ManufacturerName% = Standard,NTARM64.10.0...18362
+
+[Standard.NTARM64.10.0...18362]
+%DeviceName% = ES8316_Device, ACPI\ESSX8316
+%DeviceName% = ES8316_Device, ACPI\VEN_ESSX&DEV_8316
+
+[ES8316_Device.NT]
+CopyFiles = Drivers_Dir
+AddReg = ES8316_Device.AddReg
+
+[ES8316_Device.AddReg]
+
+[Drivers_Dir]
+ES8316.sys
+
+[ES8316_Device.NT.HW]
+AddReg = ES8316_Device.HW.AddReg
+DelReg = ES8316_PreviousExperiment.DelReg
+
+[ES8316_PreviousExperiment.DelReg]
+HKR,,StreamMuteEnabled
+
+[ES8316_Device.HW.AddReg]
+
+HKR,,MclkHz,0x00010003,12288000
+
+HKR,,MclkId,0x00010003,0x300
+
+HKR,,MclkPolicy,0x00010003,1
+
+HKR,,I2sMaster,0x00010003,1
+
+HKR,,BclkDiv,0x00010003,0
+HKR,,SampleRate,0x00010003,48000
+
+HKR,,WordLength,0x00010003,16
+
+HKR,,MicInput,0x00010003,2
+
+HKR,,MicBoost,0x00010003,0
+
+HKR,,MicAlc,0x00010003,1
+
+HKR,,MicPgaGain,0x00010003,6
+
+HKR,,HpVolume,0x00010003,3
+HKR,,HpMixerGain,0x00010003,11
+
+HKR,,DacVolume,0x00010003,0
+HKR,,AdcVolume,0x00010003,0
+
+HKR,,JackDetectInverted,0x00010003,1
+
+HKR,,JackPollIntervalMs,0x00010003,1000
+HKR,,UseJackInterrupt,0x00010003,0
+
+HKR,,MuteWhenUnplugged,0x00010003,0
+
+HKR,,MicAlwaysOn,0x00010003,0
+
+HKR,,KeepPowerInD3,0x00010003,1
+
+HKR,,TraceLevel,0x00010003,4
+
+; Fixes pops after audio stops
+HKR,,PersistentStreamEnabled,0x00010003,1
+
+HKR,,HpEnableDelayMs,0x00010003,10
+HKR,,HpMuteDelayMs,0x00010003,10
+
+HKR,,DacRampRate,0x00010003,4
+
+[ES8316_Device.NT.Services]
+AddService = ES8316,%SPSVCINST_ASSOCSERVICE%, ES8316_Service_Inst
+
+[ES8316_Service_Inst]
+DisplayName    = %ServiceDesc%
+ServiceType    = 1
+StartType      = 3
+ErrorControl   = 1
+ServiceBinary  = %13%\ES8316.sys
+
+[ES8316_Device.NT.Wdf]
+KmdfService = ES8316, ES8316_wdfsect
+
+[ES8316_wdfsect]
+KmdfLibraryVersion = 1.15
+
+[Strings]
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ProviderName     = "rubikpi-dev"
+ManufacturerName = "Everest Semiconductor"
+DiskName         = "ES8316 Codec Driver Installation Disk"
+DeviceName       = "Everest ES8316 Audio Codec"
+ServiceDesc      = "Everest ES8316 Audio Codec Service"
