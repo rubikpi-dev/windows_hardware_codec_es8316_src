@@ -81,7 +81,7 @@ Es8316ReadConfig(
     ES8316_REG_ULONG(Ctx, key, "MicBoost",            MicBoost,           0);
     ES8316_REG_ULONG(Ctx, key, "MicAlc",              MicAlc,             1);
     ES8316_REG_ULONG(Ctx, key, "MicPgaGain",          MicPgaGain,         6);
-    ES8316_REG_ULONG(Ctx, key, "HpVolume",            HpVolume,           3);
+    ES8316_REG_ULONG(Ctx, key, "HpVolume",            HpVolume,           2);
     ES8316_REG_ULONG(Ctx, key, "HpMixerGain",         HpMixerGain,        11);
     ES8316_REG_ULONG(Ctx, key, "DacVolume",           DacVolume,          0);
     ES8316_REG_ULONG(Ctx, key, "AdcVolume",           AdcVolume,          0);
@@ -639,7 +639,8 @@ Es8316EvtIoDeviceControl(
         {
             snapshot.Size = sizeof(snapshot);
             snapshot.Version = 1;
-            snapshot.State = 4;
+            snapshot.State = ctx->Config.PersistentStreamEnabled ?
+                Es8316PersistentWaiting : Es8316PersistentDisabled;
             snapshot.Enabled = ctx->Config.PersistentStreamEnabled != 0;
             snapshot.LastStatus = ctx->PersistentInitStatus;
         }

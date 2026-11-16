@@ -378,9 +378,9 @@ Es8316CodecInitialize(
 
     CHECK(Es8316RegWrite(Ctx, ES8316_RESET, ES8316_RESET_ALL));
     Es8316Sleep(5);
-    CHECK(Es8316RegWrite(Ctx, ES8316_RESET, ES8316_RESET_CSM_ON));
-    Es8316Sleep(30);
+    CHECK(Es8316RegWrite(Ctx, ES8316_RESET, 0x00));
     CHECK(Es8316RegWrite(Ctx, ES8316_SYS_VMIDSEL, 0xFF));
+    Es8316Sleep(30);
     CHECK(Es8316RegWrite(Ctx, ES8316_CLKMGR_ADCOSR, 0x32));
     CHECK(Es8316RegWrite(Ctx, ES8316_CLKMGR_CLKSEL, 0x09));
 
@@ -392,7 +392,10 @@ Es8316CodecInitialize(
                           ES8316_SYS_PDN_DAC_VREF | ES8316_SYS_PDN_BIAS | ES8316_SYS_PDN_ANALOG,
                           0));
 
-    CHECK(Es8316RegUpdate(Ctx, ES8316_DAC_SET1, ES8316_DAC_SET1_SRC_MASK | ES8316_DAC_SET1_MUTE, ES8316_DAC_SET1_MUTE));
+    CHECK(Es8316RegWrite(Ctx, ES8316_CPHP_OUTEN, 0x00));
+    CHECK(Es8316RegUpdate(Ctx, ES8316_DAC_SET1,
+                          ES8316_DAC_SET1_SRC_MASK | ES8316_DAC_SET1_MUTE | 0x10,
+                          ES8316_DAC_SET1_MUTE));
 
     if (Ctx->Config.DacRampRate < 4)
     {
@@ -414,6 +417,9 @@ Es8316CodecInitialize(
     CHECK(Es8316RegWrite(Ctx, ES8316_CPHP_LDOCTL, 0x30));
     CHECK(Es8316RegWrite(Ctx, ES8316_CPHP_PDN2, 0x10));
     CHECK(Es8316RegWrite(Ctx, ES8316_CPHP_PDN1, 0x02));
+    CHECK(Es8316RegWrite(Ctx, ES8316_SYS_LP1, 0x00));
+    CHECK(Es8316RegWrite(Ctx, ES8316_SYS_LP2, 0x00));
+    CHECK(Es8316RegWrite(Ctx, ES8316_SYS_VMIDLOW, 0x10));
     CHECK(Es8316RegUpdate(Ctx, ES8316_CPHP_ICAL_VOL,
                           ES8316_CPHP_ICAL_VOL_LICAL_PDN | ES8316_CPHP_ICAL_VOL_RICAL_PDN |
                           ES8316_CPHP_ICAL_VOL_LVOL_MASK | ES8316_CPHP_ICAL_VOL_RVOL_MASK,
@@ -436,6 +442,13 @@ Es8316CodecInitialize(
     CHECK(Es8316RegUpdate(Ctx, ES8316_ADC_PDN_LINSEL,
                           ES8316_ADC_PDN_LINSEL_PGA_PDN | ES8316_ADC_PDN_LINSEL_ADC_PDN,
                           ES8316_ADC_PDN_LINSEL_PGA_PDN | ES8316_ADC_PDN_LINSEL_ADC_PDN));
+
+    /* offset setup and settle */
+    CHECK(Es8316RegWrite(Ctx, ES8316_CAL_HPLIV, 0x90));
+    CHECK(Es8316RegWrite(Ctx, ES8316_CAL_HPRIV, 0x90));
+    CHECK(Es8316RegWrite(Ctx, ES8316_CAL_TYPE, 0x0F));
+    CHECK(Es8316RegWrite(Ctx, ES8316_RESET, 0xC0));
+    Es8316Sleep(50);
 
     Ctx->CodecInitialized = TRUE;
 

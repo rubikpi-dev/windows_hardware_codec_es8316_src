@@ -841,6 +841,8 @@ NTSTATUS Es8316PersistentInitialize(WDFDEVICE device, ES8316_PERSISTENT_STREAM *
     OBJECT_ATTRIBUTES attributes;
     NTSTATUS status;
     *stream = NULL;
+    if (!DeviceGetContext(device)->Config.PersistentStreamEnabled)
+        return STATUS_SUCCESS;
     s = ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(*s), PS_TAG);
     if (s == NULL) return STATUS_INSUFFICIENT_RESOURCES;
     RtlZeroMemory(s, sizeof(*s));

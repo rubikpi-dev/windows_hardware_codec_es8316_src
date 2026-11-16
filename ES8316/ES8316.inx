@@ -62,7 +62,7 @@ HKR,,MicAlc,0x00010003,1
 
 HKR,,MicPgaGain,0x00010003,6
 
-HKR,,HpVolume,0x00010003,3
+HKR,,HpVolume,0x00010001,2
 HKR,,HpMixerGain,0x00010003,11
 
 HKR,,DacVolume,0x00010003,0
@@ -82,7 +82,7 @@ HKR,,KeepPowerInD3,0x00010003,1
 HKR,,TraceLevel,0x00010003,4
 
 ; Fixes pops after audio stops
-HKR,,PersistentStreamEnabled,0x00010003,1
+HKR,,PersistentStreamEnabled,0x00010001,1
 
 HKR,,HpEnableDelayMs,0x00010003,10
 HKR,,HpMuteDelayMs,0x00010003,10
