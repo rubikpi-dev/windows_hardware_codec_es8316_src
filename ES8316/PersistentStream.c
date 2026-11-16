@@ -37,6 +37,7 @@ struct _ES8316_PERSISTENT_STREAM {
     PETHREAD WorkerThread;
     BOOLEAN Wanted;
     BOOLEAN Exit;
+    BOOLEAN PowerSuspending;
     BOOLEAN Blocked;
     BOOLEAN Removed;
     BOOLEAN RetireTarget;
@@ -399,11 +400,18 @@ static NTSTATUS PsInterfaceChange(PVOID notification, PVOID context)
 
 static VOID PsClose(ES8316_PERSISTENT_STREAM *s)
 {
+    KIRQL irql;
+    BOOLEAN powerSuspending;
+    KeAcquireSpinLock(&s->Lock, &irql);
+    powerSuspending = s->PowerSuspending;
+    KeReleaseSpinLock(&s->Lock, irql);
     if (s->PinFile != NULL) {
         KSSTATE prior = s->PinState;
-        if (prior >= KSSTATE_RUN) (VOID)PsSetState(s, KSSTATE_PAUSE, TRUE);
-        if (prior >= KSSTATE_PAUSE) (VOID)PsSetState(s, KSSTATE_ACQUIRE, TRUE);
-        if (prior >= KSSTATE_ACQUIRE) (VOID)PsSetState(s, KSSTATE_STOP, TRUE);
+        if (!powerSuspending) {
+            if (prior >= KSSTATE_RUN) (VOID)PsSetState(s, KSSTATE_PAUSE, TRUE);
+            if (prior >= KSSTATE_PAUSE) (VOID)PsSetState(s, KSSTATE_ACQUIRE, TRUE);
+            if (prior >= KSSTATE_ACQUIRE) (VOID)PsSetState(s, KSSTATE_STOP, TRUE);
+        }
         ObDereferenceObject(s->PinFile);
         s->PinFile = NULL;
     }
@@ -874,6 +882,7 @@ VOID Es8316PersistentResume(ES8316_PERSISTENT_STREAM *s)
     KIRQL irql;
     if (s == NULL) return;
     KeAcquireSpinLock(&s->Lock, &irql);
+    s->PowerSuspending = FALSE;
     s->Wanted = TRUE;
     KeClearEvent(&s->Idle);
     KeReleaseSpinLock(&s->Lock, irql);
@@ -885,6 +894,7 @@ VOID Es8316PersistentSuspend(ES8316_PERSISTENT_STREAM *s)
     KIRQL irql;
     if (s == NULL) return;
     KeAcquireSpinLock(&s->Lock, &irql);
+    s->PowerSuspending = TRUE;
     s->Wanted = FALSE;
     KeReleaseSpinLock(&s->Lock, irql);
     PsCancel(s);
@@ -899,6 +909,7 @@ VOID Es8316PersistentCleanup(ES8316_PERSISTENT_STREAM *s)
     IoUnregisterPlugPlayNotificationEx(s->InterfaceNotification);
     KeAcquireSpinLock(&s->Lock, &irql);
     s->Exit = TRUE;
+    s->PowerSuspending = TRUE;
     s->Wanted = FALSE;
     KeReleaseSpinLock(&s->Lock, irql);
     PsCancel(s);

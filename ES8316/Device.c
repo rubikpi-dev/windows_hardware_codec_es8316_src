@@ -441,6 +441,15 @@ Es8316EvtD0Entry(
     WdfWaitLockAcquire(ctx->CodecLock, NULL);
 
     ctx->JackEvents = 0;
+    if (ctx->PowerGpio != NULL)
+    {
+        status = GpioWritePin(ctx->PowerGpio, TRUE);
+        if (!NT_SUCCESS(status))
+        {
+            WdfWaitLockRelease(ctx->CodecLock);
+            return status;
+        }
+    }
     ctx->PollCount = 0;
     ctx->JackState = Es8316JackUnknown;
     ctx->ButtonPressed = FALSE;
@@ -483,7 +492,10 @@ Es8316EvtD0Exit(
 
     ctx = DeviceGetContext(Device);
 
-    Trace(TRACE_LEVEL_INFORMATION, TRACE_POWER, "D0 exit");
+    Trace(TRACE_LEVEL_INFORMATION, TRACE_POWER, "D0 exit: stopping persistent audio");
+
+    /* stop audio */
+    Es8316PersistentSuspend(ctx->Persistent);
 
     WdfTimerStop(ctx->JackPollTimer, TRUE);
     WdfWorkItemFlush(ctx->JackWorkItem);
@@ -498,6 +510,15 @@ Es8316EvtD0Exit(
     WdfWaitLockRelease(ctx->CodecLock);
 
     Es8316MclkSetWanted(Device, FALSE);
+
+    if (ctx->PowerGpio != NULL)
+    {
+        NTSTATUS powerStatus = GpioWritePin(ctx->PowerGpio, FALSE);
+        if (!NT_SUCCESS(powerStatus))
+        {
+            Trace(TRACE_LEVEL_WARNING, TRACE_POWER, "codec supply off failed 0x%08lX", powerStatus);
+        }
+    }
 
     return STATUS_SUCCESS;
 }
@@ -829,7 +850,19 @@ Es8316EvtSelfManagedIoRestart(_In_ WDFDEVICE Device)
 NTSTATUS
 Es8316EvtSelfManagedIoSuspend(_In_ WDFDEVICE Device)
 {
-    Es8316PersistentSuspend(DeviceGetContext(Device)->Persistent);
+    PDEVICE_CONTEXT ctx = DeviceGetContext(Device);
+
+    WdfWaitLockAcquire(ctx->CodecLock, NULL);
+    if (ctx->CodecInitialized)
+    {
+        NTSTATUS muteStatus = Es8316CodecSetOutputEnabled(ctx, FALSE);
+        if (!NT_SUCCESS(muteStatus))
+        {
+            Trace(TRACE_LEVEL_WARNING, TRACE_POWER, "suspend mute failed 0x%08lX", muteStatus);
+        }
+    }
+    WdfWaitLockRelease(ctx->CodecLock);
+    Es8316PersistentSuspend(ctx->Persistent);
     return STATUS_SUCCESS;
 }
 
